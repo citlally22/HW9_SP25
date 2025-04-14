@@ -194,4 +194,3 @@ class Ui_TrussStructuralDesign(object):
         self.lbl_Node2Name.setText(_translate("TrussStructuralDesign", "Node 2 Name"))
         self.lbl_MousePos.setText(_translate("TrussStructuralDesign", "TextLabel"))
         self.lbl_Zoom.setText(_translate("TrussStructuralDesign", "Zoom"))
-

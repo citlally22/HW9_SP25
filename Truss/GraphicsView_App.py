@@ -12,34 +12,14 @@ from scipy import optimize
 
 #region class definitions
 class RigidLink(qtw.QGraphicsItem):
-    def __init__(self, stX, stY, enX, enY, radius=10, parent=None, pen=None, brush=None, name='RigidLink' ):
+    def __init__(self, stX, stY, enX, enY, radius=10, parent=None, pen=None, brush=None, name='RigidLink'):
         """
-        This is a custom class for drawing a rigid link.  The paint function executes everytime the scene
-        which holds the link is updated.  The steps to making the link are:
-        1. Specify the pen, brush, start and end x,y coordinates of the link and radius by unpacking arguments
-        2. Compute the length and angle of the link (also sets self.DX, self.DY)
-        3. Compute the rectangle that will contain the link (i.e., its bounding box)
-        4. Setup the transformation that will rotate and then translate the link
-
-        *Note:  The paint function is called each time the scene changes.  I draw a link aligned with the x-axis first
-        with the start point at 0,0 and end point at length, 0. Then, the path painter draws the centerline and the
-        start and end pivot points, then the start semicircle, a line to the end semicircle, the end semicircle,
-        and a line back to the start semicircle.  Finally, the link is rotated about 0,0 and then translated to startX,
-        startY.  In this way, the bounding rectangle gets transformed and this helps with detecting the item in the
-        graphics view when the mouse hovers.
-
-        :param stX:
-        :param stY:
-        :param enX:
-        :param enY:
-        :param radius:
-        :param parent:
-        :param pen:
-        :param brush:
+        This is a custom class for drawing a rigid link.  The paint function executes every time the scene
+        which holds the link is updated.
         """
         super().__init__(parent)
 
-        #step 1
+        # Step 1: Initialize attributes
         self.pen = pen
         self.brush = brush
         self.name = name
@@ -48,11 +28,11 @@ class RigidLink(qtw.QGraphicsItem):
         self.endX = enX
         self.endY = enY
         self.radius = radius
-        #step 2
+        # Step 2: Compute length and angle
         self.angle = self.linkAngle()
-        #step 3
-        self.rect=qtc.QRectF(-self.radius, -self.radius,self.length+self.radius, self.radius )
-        #step 4 setup transform
+        # Step 3: Compute bounding rectangle
+        self.rect = qtc.QRectF(-self.radius, -self.radius, self.length + self.radius, self.radius)
+        # Step 4: Setup transform
         self.transform = qtg.QTransform()
         self.transform.reset()
 
@@ -61,11 +41,11 @@ class RigidLink(qtw.QGraphicsItem):
         return boundingRect
 
     def deltaY(self):
-        self.DY=self.endY-self.startY
+        self.DY = self.endY - self.startY
         return self.DY
 
     def deltaX(self):
-        self.DX=self.endX-self.startX
+        self.DX = self.endX - self.startX
         return self.DX
 
     def linkLength(self):
@@ -75,80 +55,71 @@ class RigidLink(qtw.QGraphicsItem):
     def linkAngle(self):
         self.linkLength()
         if self.length == 0.0:
-            self.angle=0
+            self.angle = 0
         else:
-            self.angle= math.acos(self.DX/self.length)
+            self.angle = math.acos(self.DX / self.length)
             self.angle *= -1 if (self.DY > 0) else 1
         return self.angle
 
     def paint(self, painter, option, widget=None):
         """
-        This function creates a path painter the paints a semicircle around the start point (ccw), a straight line
-        offset from the main axis of the link, a semicircle around the end point (ccw), and a straight line offset from
-        the main axis.  It then assigns a pen and brush.  Finally, it draws a circle at the start and end points to
-        indicate the pivot points.
-        :param painter:
-        :param option:
-        :param widget:
-        :return:
+        Draws a link with semicircles at the ends and a dashed centerline.
         """
-        #instantiate a QPainterPath object
         path = qtg.QPainterPath()
-        # compute linkLength from startX, startY, endX, endY
         len = self.linkLength()
-        # compute the angle of the link from deltaY & deltaX
-        angLink = self.linkAngle()*180/math.pi
+        angLink = self.linkAngle() * 180 / math.pi
 
-        #define bounding rectangles for the radiused ends of the link
-        rectSt = qtc.QRectF(-self.radius, -self.radius, 2*self.radius, 2*self.radius)
-        rectEn = qtc.QRectF(self.length-self.radius, -self.radius, 2*self.radius, 2*self.radius)
-
-        #draw a center line
-        centerLinePen= qtg.QPen()
+        # Draw a dashed centerline
+        centerLinePen = qtg.QPen()
         centerLinePen.setStyle(qtc.Qt.DashDotLine)
-        r,g,b,a=self.pen.color().getRgb()
-        centerLinePen.setColor(qtg.QColor(r,g,b,128))
+        r, g, b, a = self.pen.color().getRgb()
+        centerLinePen.setColor(qtg.QColor(r, g, b, 128))
         centerLinePen.setWidth(1)
-        p1=qtc.QPointF(0,0)
-        p2=qtc.QPointF(len,0)
+        p1 = qtc.QPointF(0, 0)
+        p2 = qtc.QPointF(len, 0)
         painter.setPen(centerLinePen)
-        painter.drawLine(p1,p2)
+        painter.drawLine(p1, p2)
 
-        path.arcMoveTo(rectSt,90)
-        path.arcTo(rectSt, 90,180)
-        path.lineTo(self.length,self.radius)
+        # Define bounding rectangles for the radiused ends of the link
+        rectSt = qtc.QRectF(-self.radius, -self.radius, 2 * self.radius, 2 * self.radius)
+        rectEn = qtc.QRectF(self.length - self.radius, -self.radius, 2 * self.radius, 2 * self.radius)
+
+        # Draw the link shape
+        path.arcMoveTo(rectSt, 90)
+        path.arcTo(rectSt, 90, 180)
+        path.lineTo(self.length, self.radius)
         path.arcMoveTo(rectEn, 270)
         path.arcTo(rectEn, 270, 180)
         path.lineTo(0, -self.radius)
         if self.pen is not None:
-            painter.setPen(self.pen)  # Red color pen
+            painter.setPen(self.pen)
         if self.brush is not None:
             painter.setBrush(self.brush)
         painter.drawPath(path)
-        #draw some circles at the end points
-        pivotStart=qtc.QRectF(-self.radius/6, -self.radius/6, self.radius/3, self.radius/3)
-        pivotEnd=qtc.QRectF(self.length-self.radius/6, -self.radius/6, self.radius/3, self.radius/3)
+
+        # Draw circles at the pivot points
+        pivotStart = qtc.QRectF(-self.radius / 6, -self.radius / 6, self.radius / 3, self.radius / 3)
+        pivotEnd = qtc.QRectF(self.length - self.radius / 6, -self.radius / 6, self.radius / 3, self.radius / 3)
         painter.drawEllipse(pivotStart)
         painter.drawEllipse(pivotEnd)
-        #redefine the bounding rectangle
-        self.rect=qtc.QRectF(-self.radius,-self.radius, self.length+2*self.radius,2*self.radius)
-        #Now perform transformations on the object.  Note: transformations are by matrix multiplication [newPt]=[T][R][oldPt]
-        #in 2D [R] is the 2x2 rotation matrix.  Hence [R][oldPt] is (2x2)*(2x1)=(2x1)=[rotatedPt]
-        #[T] is the 2x2 translation matrix.  Hence [T][rotatedPt] = [newPt]
+
+        # Redefine the bounding rectangle
+        self.rect = qtc.QRectF(-self.radius, -self.radius, self.length + 2 * self.radius, 2 * self.radius)
+
+        # Perform transformations
         self.transform.reset()
         self.transform.translate(self.startX, self.startY)
         self.transform.rotate(-angLink)
         self.setTransform(self.transform)
         self.transform.reset()
-        stTT=self.name+"\nstart: ({:0.3f}, {:0.3f})\nend:({:0.3f},{:0.3f})\nlength: {:0.3f}\nangle: {:0.3f}".format(self.startX, self.startY, self.endX, self.endY, self.length, self.angle*180/math.pi)
+
+        # Set tooltip
+        stTT = self.name + "\nstart: ({:0.3f}, {:0.3f})\nend:({:0.3f},{:0.3f})\nlength: {:0.3f}\nangle: {:0.3f}".format(
+            self.startX, self.startY, self.endX, self.endY, self.length, self.angle * 180 / math.pi)
         self.setToolTip(stTT)
-        # brPen=qtg.QPen()
-        # brPen.setWidth(0)
-        # painter.setPen(brPen)
-        # painter.drawRect(self.boundingRect())
 
 class RigidPivotPoint(qtw.QGraphicsItem):
-    def __init__(self, ptX, ptY, pivotHeight, pivotWidth, parent=None, pen=None, brush=None, rotation=0, name='RigidPivotPoint'):
+    def __init__(self, ptX, ptY, pivotHeight, pivotWidth, parent=None, pen=None, brush=None, rotation=0, name='RigidPivotPoint', is_roller=False):
         super().__init__(parent)
         self.x = ptX
         self.y = ptY
@@ -157,11 +128,16 @@ class RigidPivotPoint(qtw.QGraphicsItem):
         self.height = pivotHeight
         self.width = pivotWidth
         self.radius = min(self.height, self.width) / 4
-        self.rect = qtc.QRectF(self.x - self.width / 2, self.y - self.radius, self.width, self.height + self.radius)
+        self.is_roller = is_roller  # Flag to indicate if this is a roller joint
+        self.roller_radius = self.radius / 2  # Size of the roller symbol
+        # Adjust bounding rectangle to account for roller symbol if present
+        extra_height = self.roller_radius * 2 if self.is_roller else 0
+        self.rect = qtc.QRectF(self.x - self.width / 2, self.y - self.radius,
+                              self.width, self.height + self.radius + extra_height)
         self.rotationAngle = rotation
         self.name = name
         self.transformation = qtg.QTransform()
-        stTT = self.name +"\nx={:0.3f}, y={:0.3f}".format(self.x, self.y)
+        stTT = self.name + "\nx={:0.3f}, y={:0.3f}".format(self.x, self.y)
         self.setToolTip(stTT)
 
     def boundingRect(self):
@@ -169,61 +145,79 @@ class RigidPivotPoint(qtw.QGraphicsItem):
         return bounding_rect
 
     def rotate(self, angle):
-        self.rotationAngle=angle
+        self.rotationAngle = angle
 
     def paint(self, painter, option, widget=None):
         path = qtg.QPainterPath()
-        radius = min(self.height,self.width)/2
+        radius = min(self.height, self.width) / 2
 
-        H=math.sqrt(math.pow(self.width/2,2)+math.pow(self.height,2))
-        phi=math.asin(radius/H)
-        theta=math.asin(self.height/H)
-        ang=math.pi-phi-theta
-        l=H*math.cos(phi)
+        # Compute triangle geometry
+        H = math.sqrt(math.pow(self.width / 2, 2) + math.pow(self.height, 2))
+        phi = math.asin(radius / H)
+        theta = math.asin(self.height / H)
+        ang = math.pi - phi - theta
+        l = H * math.cos(phi)
 
-        x1=self.width/2
-        y1=self.height
-        path.moveTo(x1,y1)
-        x2=l*math.cos(ang)
-        y2=l*math.sin(ang)
-        path.lineTo(x1+x2, y1-y2)
-        pivotRect=qtc.QRectF(-radius, -radius, 2*radius, 2*radius)
-        stAng=math.pi/2-phi-theta
-        spanAng=math.pi-2*stAng
-        path.arcTo(pivotRect,stAng*180/math.pi, spanAng*180/math.pi)
-        x4=-self.width/2
-        y4=+self.height
-        path.lineTo(x4,y4)
-        #path.arcTo(pivotRect,ang*180/math.pi, 90)
+        # Draw the triangle (pivot point)
+        x1 = self.width / 2
+        y1 = self.height
+        path.moveTo(x1, y1)
+        x2 = l * math.cos(ang)
+        y2 = l * math.sin(ang)
+        path.lineTo(x1 + x2, y1 - y2)
+        pivotRect = qtc.QRectF(-radius, -radius, 2 * radius, 2 * radius)
+        stAng = math.pi / 2 - phi - theta
+        spanAng = math.pi - 2 * stAng
+        path.arcTo(pivotRect, stAng * 180 / math.pi, spanAng * 180 / math.pi)
+        x4 = -self.width / 2
+        y4 = self.height
+        path.lineTo(x4, y4)
+
+        # Set pen and brush for the triangle
         if self.pen is not None:
-            painter.setPen(self.pen)  # Red color pen
+            painter.setPen(self.pen)
         if self.brush is not None:
             painter.setBrush(self.brush)
         painter.drawPath(path)
 
-        pivotPtRect=qtc.QRectF(-radius/4, -radius/4, radius/2,radius/2)
+        # Draw the pivot point circle at the top
+        pivotPtRect = qtc.QRectF(-radius / 4, -radius / 4, radius / 2, radius / 2)
         painter.drawEllipse(pivotPtRect)
-        x5=-self.width
-        x6=+self.width
-        painter.drawLine(x5,y4,x6,y4)
-        penOutline = qtg.QPen(qtc.Qt.NoPen)
-        hatchbrush = qtg.QBrush(qtc.Qt.BDiagPattern)
-        painter.setPen(penOutline)
-        painter.setBrush(hatchbrush)
-        support = qtc.QRectF(x5,y4,self.width*2, self.height)
-        painter.drawRect(support)
-        self.rect=qtc.QRectF(-self.width,-self.radius, self.width*2, self.height*2+self.radius)
+
+        # Draw the base line or roller symbol
+        x5 = -self.width / 2
+        x6 = self.width / 2
+        y_base = self.height  # Base of the triangle
+
+        if self.is_roller:
+            # Draw a roller symbol: a small circle below the triangle
+            roller_y = y_base + self.roller_radius  # Position the roller below the base
+            rollerRect = qtc.QRectF(-self.roller_radius, roller_y - self.roller_radius,
+                                   2 * self.roller_radius, 2 * self.roller_radius)
+            painter.drawEllipse(rollerRect)
+            # Draw a short line under the roller to represent the surface it rolls on
+            painter.drawLine(x5, roller_y + self.roller_radius, x6, roller_y + self.roller_radius)
+        else:
+            # Draw the fixed support base (same as before)
+            painter.drawLine(x5, y4, x6, y4)
+            penOutline = qtg.QPen(qtc.Qt.NoPen)
+            hatchbrush = qtg.QBrush(qtc.Qt.BDiagPattern)
+            painter.setPen(penOutline)
+            painter.setBrush(hatchbrush)
+            support = qtc.QRectF(x5, y4, self.width, self.height)
+            painter.drawRect(support)
+
+        # Update bounding rectangle to include roller symbol if present
+        extra_height = self.roller_radius * 2 if self.is_roller else 0
+        self.rect = qtc.QRectF(-self.width / 2, -self.radius,
+                              self.width, self.height + self.radius + extra_height)
+
+        # Apply transformations
         self.transformation.reset()
         self.transformation.translate(self.x, self.y)
         self.transformation.rotate(self.rotationAngle)
         self.setTransform(self.transformation)
-
         self.transformation.reset()
-        # brPen=qtg.QPen()
-        # brPen.setWidth(0)
-        # painter.setPen(brPen)
-        # painter.drawRect(self.boundingRect())
-
 
 class MainWindow(Ui_Form, qtw.QWidget):
     def __init__(self):

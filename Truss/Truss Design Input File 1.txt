@@ -1,5 +1,5 @@
 
-# Examle TRUSS - for MAE 3403 Spring 2018 - Homework 9
+# Example TRUSS - for MAE 3403 Spring 2018 - Homework 9
 # https://www.mathalino.com/reviewer/engineering-mechanics/problem-407-warren-truss-method-joints
 
 # Lines starting with a # character are comments to be ignored
@@ -28,12 +28,11 @@ node,  D,     180,   103.92
 node,  Right, 240,   0
 
 # Links - structural members connecting two nodes
-      name    Node-1   Node-2
-link,  1,     Left,    B
-link,  2,     Left,    C
-link,  3,     B,       C
-link,  top,   B,       D
-link,  5,     C,       D
-link,  6,     C,       Right
-link,  7,     D,       Right
-
+#      name    Node-1   Node-2   width(m)  thickness(m)  material
+link,  1,     Left,    B,       0.1,      0.05,        steel
+link,  2,     Left,    C,       0.12,     0.06,        aluminum
+link,  3,     B,       C,       0.1,      0.05,        steel
+link,  top,   B,       D,       0.15,     0.07,        aluminum
+link,  5,     C,       D,       0.1,      0.05,        steel
+link,  6,     C,       Right,   0.12,     0.06,        aluminum
+link,  7,     D,       Right,   0.1,      0.05,        steel
