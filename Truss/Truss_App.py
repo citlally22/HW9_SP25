@@ -57,6 +57,10 @@ class MainWindow(Ui_TrussStructuralDesign, qtw.QWidget):
                 self.controller.ImportFromFile(data)
         except Exception as e:
             print(f"Error reading file: {e}")
+            print("Successfully imported file. Truss has", len(self.controller.truss.nodes), "nodes and",
+                  len(self.controller.truss.links), "links.")
+
+
 #endregion
 
 #region function definitions
